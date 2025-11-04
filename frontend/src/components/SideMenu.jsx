@@ -48,7 +48,7 @@ const SideMenu = ({ activeMenu }) => {
   }, [currentUser])
 
   return (
-    <div className="w-64 p-6 h-full flex flex-col lg:border-r lg:border-gray-200/50 bg-white/80 backdrop-blur-sm">
+    <div className="w-64 h-full p-6 flex flex-col lg:border-r lg:border-gray-200/50 bg-white/80 backdrop-blur-sm overflow-y-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 overflow-hidden mb-3 border-2 border-white shadow-lg ring-2 ring-blue-100">
           <img

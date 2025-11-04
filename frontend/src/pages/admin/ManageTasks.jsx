@@ -128,6 +128,12 @@ const ManageTasks = () => {
               createdAt={item.createdAt}
               dueDate={item.dueDate}
               assignedTo={item.assignedTo?.map((item) => item.profileImageUrl)}
+              primaryOwners={item.primaryOwners?.map(
+                (owner) => owner.profileImageUrl
+              )}
+              contributors={item.contributors?.map(
+                (contrib) => contrib.profileImageUrl
+              )}
               attachmentCount={item.attachments?.length || 0}
               completedTodoCount={item.completedCount || 0}
               todoChecklist={item.todoChecklist || []}

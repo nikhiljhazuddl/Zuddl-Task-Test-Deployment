@@ -6,6 +6,7 @@ import {
   getDashboardData,
   getTaskById,
   getTasks,
+  getUpcomingDeadlines,
   updateTask,
   updateTaskChecklist,
   updateTaskStatus,
@@ -14,6 +15,7 @@ import {
 
 const router = express.Router()
 
+// Task routes - specific routes must come before parameterized routes
 router.post("/create", verifyToken, adminOnly, createTask)
 
 router.get("/", verifyToken, getTasks)
@@ -22,6 +24,9 @@ router.get("/dashboard-data", verifyToken, adminOnly, getDashboardData)
 
 router.get("/user-dashboard-data", verifyToken, userDashboardData)
 
+router.get("/upcoming-deadlines", verifyToken, getUpcomingDeadlines)
+
+// IMPORTANT: Keep parameterized routes (:id) AFTER specific routes
 router.get("/:id", verifyToken, getTaskById)
 
 router.put("/:id", verifyToken, updateTask)

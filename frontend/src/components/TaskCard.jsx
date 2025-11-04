@@ -2,7 +2,7 @@ import React from "react"
 import Progress from "./Progress"
 import moment from "moment"
 import AvatarGroup from "./AvatarGroup"
-import { FaFileLines } from "react-icons/fa6"
+import { FaFileLines, FaCrown, FaUsers } from "react-icons/fa6"
 
 const TaskCard = ({
   title,
@@ -13,6 +13,8 @@ const TaskCard = ({
   createdAt,
   dueDate,
   assignedTo,
+  primaryOwners,
+  contributors,
   attachmentCount,
   completedTodoCount,
   todoChecklist,
@@ -110,7 +112,29 @@ const TaskCard = ({
         </div>
 
         <div className="flex items-center justify-between mt-3">
-          <AvatarGroup avatars={assignedTo || []} />
+          <div className="space-y-2 flex-1">
+            {primaryOwners && primaryOwners.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FaCrown className="text-amber-500 text-xs" />
+                <AvatarGroup avatars={primaryOwners || []} maxVisible={3} />
+              </div>
+            )}
+
+            {contributors && contributors.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FaUsers className="text-blue-500 text-xs" />
+                <AvatarGroup avatars={contributors || []} maxVisible={3} />
+              </div>
+            )}
+
+            {/* Fallback to assignedTo if no owners/contributors */}
+            {(!primaryOwners || primaryOwners.length === 0) &&
+              (!contributors || contributors.length === 0) &&
+              assignedTo &&
+              assignedTo.length > 0 && (
+                <AvatarGroup avatars={assignedTo || []} maxVisible={3} />
+              )}
+          </div>
 
           {attachmentCount > 0 && (
             <div className="flex items-center gap-2 bg-blue-50 px-2.5 py-1.5 rounded-lg">

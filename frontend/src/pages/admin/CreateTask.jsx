@@ -6,6 +6,7 @@ import DatePicker from "react-datepicker"
 
 import "react-datepicker/dist/react-datepicker.css"
 import SelectedUsers from "../../components/SelectedUsers"
+import TeamMemberSelector from "../../components/TeamMemberSelector"
 import TodoListInput from "../../components/TodoListInput"
 import AddAttachmentsInput from "../../components/AddAttachmentsInput"
 import axiosInstance from "../../utils/axioInstance"
@@ -26,6 +27,8 @@ const CreateTask = () => {
     priority: "Low",
     dueDate: null,
     assignedTo: [],
+    primaryOwners: [],
+    contributors: [],
     todoChecklist: [],
     attachments: [],
   })
@@ -52,6 +55,8 @@ const CreateTask = () => {
       priority: "Low",
       dueDate: null,
       assignedTo: [],
+      primaryOwners: [],
+      contributors: [],
       todoChecklist: [],
       attachments: [],
     })
@@ -65,8 +70,15 @@ const CreateTask = () => {
         completed: false,
       }))
 
+      // Combine primaryOwners and contributors into assignedTo for backward compatibility
+      const allAssignedMembers = [
+        ...taskData.primaryOwners,
+        ...taskData.contributors,
+      ]
+
       const response = await axiosInstance.post("/tasks/create", {
         ...taskData,
+        assignedTo: allAssignedMembers,
         dueDate: new Date(taskData.dueDate).toISOString(),
         todoChecklist: todolist,
       })
@@ -95,8 +107,15 @@ const CreateTask = () => {
         }
       })
 
+      // Combine primaryOwners and contributors into assignedTo for backward compatibility
+      const allAssignedMembers = [
+        ...taskData.primaryOwners,
+        ...taskData.contributors,
+      ]
+
       const response = await axiosInstance.put(`/tasks/${taskId}`, {
         ...taskData,
+        assignedTo: allAssignedMembers,
         dueDate: new Date(taskData.dueDate).toISOString(),
         todoChecklist: todolist,
       })
@@ -128,8 +147,8 @@ const CreateTask = () => {
       return
     }
 
-    if (taskData.assignedTo?.length === 0) {
-      setError("Task is not assigned to any member!")
+    if (taskData.primaryOwners?.length === 0 && taskData.contributors?.length === 0) {
+      setError("Task must have at least one primary owner or contributor!")
       return
     }
 
@@ -165,6 +184,8 @@ const CreateTask = () => {
             ? moment(taskInfo?.dueDate).format("YYYY-MM-DD")
             : null,
           assignedTo: taskInfo?.assignedTo?.map((item) => item?._id || []),
+          primaryOwners: taskInfo?.primaryOwners?.map((item) => item?._id) || [],
+          contributors: taskInfo?.contributors?.map((item) => item?._id) || [],
           todoChecklist:
             taskInfo?.todoChecklist?.map((item) => item?.text) || [],
           attachments: taskInfo?.attachments || [],
@@ -293,13 +314,17 @@ const CreateTask = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Assign To
+                  Assign Team Members
                 </label>
 
-                <SelectedUsers
-                  selectedUser={taskData.assignedTo}
-                  setSelectedUser={(value) =>
-                    handleValueChange("assignedTo", value)
+                <TeamMemberSelector
+                  primaryOwners={taskData.primaryOwners}
+                  setPrimaryOwners={(value) =>
+                    handleValueChange("primaryOwners", value)
+                  }
+                  contributors={taskData.contributors}
+                  setContributors={(value) =>
+                    handleValueChange("contributors", value)
                   }
                 />
               </div>

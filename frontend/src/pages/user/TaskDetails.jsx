@@ -4,7 +4,7 @@ import axiosInstance from "../../utils/axioInstance"
 import DashboardLayout from "../../components/DashboardLayout"
 import moment from "moment"
 import AvatarGroup from "../../components/AvatarGroup"
-import { FaExternalLinkAlt } from "react-icons/fa"
+import { FaExternalLinkAlt, FaCrown, FaUsers } from "react-icons/fa"
 
 const TaskDetails = () => {
   const { id } = useParams()
@@ -119,19 +119,67 @@ const TaskDetails = () => {
                     />
                   </div>
 
-                  <div className="col-span-6 md:col-span-4">
+                  <div className="col-span-12 md:col-span-4">
                     <label className="text-xs font-medium text-slate-500">
-                      Assigned To
+                      Team Members
                     </label>
 
-                    <AvatarGroup
-                      avatars={
-                        task?.assignedTo?.map(
-                          (item) => item?.profileImageUrl
-                        ) || []
-                      }
-                      maxVisible={5}
-                    />
+                    {/* Primary Owners */}
+                    {task?.primaryOwners && task?.primaryOwners.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <FaCrown className="text-amber-500 text-xs" />
+                          <span className="text-[11px] font-medium text-gray-600">
+                            Primary Owner{task?.primaryOwners.length > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <AvatarGroup
+                          avatars={
+                            task?.primaryOwners?.map(
+                              (item) => item?.profileImageUrl
+                            ) || []
+                          }
+                          maxVisible={5}
+                        />
+                      </div>
+                    )}
+
+                    {/* Contributors */}
+                    {task?.contributors && task?.contributors.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <FaUsers className="text-blue-500 text-xs" />
+                          <span className="text-[11px] font-medium text-gray-600">
+                            Contributor{task?.contributors.length > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <AvatarGroup
+                          avatars={
+                            task?.contributors?.map(
+                              (item) => item?.profileImageUrl
+                            ) || []
+                          }
+                          maxVisible={5}
+                        />
+                      </div>
+                    )}
+
+                    {/* Fallback to assignedTo if no owners/contributors */}
+                    {(!task?.primaryOwners || task?.primaryOwners.length === 0) &&
+                      (!task?.contributors || task?.contributors.length === 0) &&
+                      task?.assignedTo &&
+                      task?.assignedTo.length > 0 && (
+                        <div className="mt-2">
+                          <AvatarGroup
+                            avatars={
+                              task?.assignedTo?.map(
+                                (item) => item?.profileImageUrl
+                              ) || []
+                            }
+                            maxVisible={5}
+                          />
+                        </div>
+                      )}
                   </div>
                 </div>
 

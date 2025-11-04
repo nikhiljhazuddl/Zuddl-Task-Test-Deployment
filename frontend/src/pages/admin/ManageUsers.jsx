@@ -12,11 +12,16 @@ const ManageUsers = () => {
     try {
       const response = await axiosInstance.get("/users/get-users")
 
+      console.log("Users API Response:", response.data)
+
       if (response.data?.length > 0) {
         setAllUsers(response.data)
+      } else {
+        console.warn("No users found in response")
       }
     } catch (error) {
-      console.log("Error fetching users: ", error)
+      console.error("Error fetching users:", error)
+      console.error("Error response:", error.response?.data)
     }
   }
 

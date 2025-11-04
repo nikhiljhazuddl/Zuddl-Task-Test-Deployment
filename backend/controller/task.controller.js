@@ -10,6 +10,8 @@ export const createTask = async (req, res, next) => {
       priority,
       dueDate,
       assignedTo,
+      primaryOwners,
+      contributors,
       attachments,
       todoChecklist,
     } = req.body
@@ -18,12 +20,23 @@ export const createTask = async (req, res, next) => {
       return next(errorHandler(400, "assignedTo must be an array of user IDs"))
     }
 
+    // Validate primaryOwners and contributors if provided
+    if (primaryOwners && !Array.isArray(primaryOwners)) {
+      return next(errorHandler(400, "primaryOwners must be an array of user IDs"))
+    }
+
+    if (contributors && !Array.isArray(contributors)) {
+      return next(errorHandler(400, "contributors must be an array of user IDs"))
+    }
+
     const task = await Task.create({
       title,
       description,
       priority,
       dueDate,
       assignedTo,
+      primaryOwners: primaryOwners || [],
+      contributors: contributors || [],
       attachments,
       todoChecklist,
       createdBy: req.user.id,
@@ -53,13 +66,16 @@ export const getTasks = async (req, res, next) => {
       tasks = await Task.find({
         ...filter,
         assignedTo: req.user.id,
-      }).populate("assignedTo", "name email profileImageUrl")
+      })
+        .populate("assignedTo", "name email profileImageUrl")
+        .populate("primaryOwners", "name email profileImageUrl")
+        .populate("contributors", "name email profileImageUrl")
     } else {
       // Show all tasks (for admin view)
-      tasks = await Task.find(filter).populate(
-        "assignedTo",
-        "name email profileImageUrl"
-      )
+      tasks = await Task.find(filter)
+        .populate("assignedTo", "name email profileImageUrl")
+        .populate("primaryOwners", "name email profileImageUrl")
+        .populate("contributors", "name email profileImageUrl")
     }
 
     tasks = await Promise.all(
@@ -112,10 +128,10 @@ export const getTasks = async (req, res, next) => {
 
 export const getTaskById = async (req, res, next) => {
   try {
-    const task = await Task.findById(req.params.id).populate(
-      "assignedTo",
-      "name email profileImageUrl"
-    )
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email profileImageUrl")
+      .populate("primaryOwners", "name email profileImageUrl")
+      .populate("contributors", "name email profileImageUrl")
 
     if (!task) {
       return next(errorHandler(404, "Task not found!"))
@@ -150,6 +166,24 @@ export const updateTask = async (req, res, next) => {
       }
 
       task.assignedTo = req.body.assignedTo
+    }
+
+    if (req.body.primaryOwners !== undefined) {
+      if (!Array.isArray(req.body.primaryOwners)) {
+        return next(
+          errorHandler(400, "primaryOwners must be an array of user IDs")
+        )
+      }
+      task.primaryOwners = req.body.primaryOwners
+    }
+
+    if (req.body.contributors !== undefined) {
+      if (!Array.isArray(req.body.contributors)) {
+        return next(
+          errorHandler(400, "contributors must be an array of user IDs")
+        )
+      }
+      task.contributors = req.body.contributors
     }
 
     const updatedTask = await task.save()
@@ -245,10 +279,10 @@ export const updateTaskChecklist = async (req, res, next) => {
 
     await task.save()
 
-    const updatedTask = await Task.findById(req.params.id).populate(
-      "assignedTo",
-      "name email profileImageUrl"
-    )
+    const updatedTask = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email profileImageUrl")
+      .populate("primaryOwners", "name email profileImageUrl")
+      .populate("contributors", "name email profileImageUrl")
 
     res
       .status(200)
@@ -425,6 +459,60 @@ export const userDashboardData = async (req, res, next) => {
       recentTasks,
     })
   } catch (error) {
+    next(error)
+  }
+}
+
+export const getUpcomingDeadlines = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+
+    // Get current date (start of today)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Get date 7 days from now (end of that day)
+    const nextWeek = new Date()
+    nextWeek.setDate(today.getDate() + 7)
+    nextWeek.setHours(23, 59, 59, 999)
+
+    console.log("[Upcoming Deadlines] Current date:", today)
+    console.log("[Upcoming Deadlines] Next week date:", nextWeek)
+    console.log("[Upcoming Deadlines] User ID:", userId)
+
+    // Find tasks due within the next 7 days assigned to current user
+    const upcomingTasks = await Task.find({
+      assignedTo: userId,
+      dueDate: {
+        $gte: today,
+        $lte: nextWeek,
+      },
+      status: { $ne: "Completed" }, // Exclude completed tasks
+    })
+      .sort({ dueDate: 1, priority: -1 }) // Sort by due date (earliest first), then priority
+      .select("title dueDate priority status")
+
+    console.log("[Upcoming Deadlines] Found upcoming tasks:", upcomingTasks.length)
+
+    // Also check for overdue tasks
+    const overdueTasks = await Task.find({
+      assignedTo: userId,
+      dueDate: { $lt: today },
+      status: { $ne: "Completed" },
+    })
+      .sort({ dueDate: 1 })
+      .select("title dueDate priority status")
+
+    console.log("[Upcoming Deadlines] Found overdue tasks:", overdueTasks.length)
+
+    // Combine overdue and upcoming tasks
+    const allUrgentTasks = [...overdueTasks, ...upcomingTasks]
+
+    console.log("[Upcoming Deadlines] Total urgent tasks:", allUrgentTasks.length)
+
+    res.status(200).json(allUrgentTasks)
+  } catch (error) {
+    console.error("[Upcoming Deadlines] Error:", error)
     next(error)
   }
 }

@@ -14,15 +14,22 @@ const DashboardLayout = ({ children, activeMenu }) => {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400/5 rounded-full blur-3xl"></div>
       </div>
 
-      <Navbar activeMenu={activeMenu} />
+      {/* Fixed Navbar */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Navbar activeMenu={activeMenu} />
+      </div>
 
       {currentUser && (
-        <div className="flex flex-1 relative z-10">
-          <div className="max-[1080px]:hidden">
+        <div className="flex pt-16 relative z-10">
+          {/* Fixed Sidebar */}
+          <div className="max-[1080px]:hidden fixed left-0 top-16 bottom-0 z-40">
             <SideMenu activeMenu={activeMenu} />
           </div>
 
-          <div className="grow mx-5">{children}</div>
+          {/* Main Content Area with left margin to account for fixed sidebar */}
+          <div className="flex-1 ml-64 max-[1080px]:ml-0">
+            <div className="mx-5">{children}</div>
+          </div>
         </div>
       )}
     </div>

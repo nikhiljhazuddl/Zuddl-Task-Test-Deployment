@@ -47,6 +47,20 @@ const taskSchema = new mongoose.Schema(
       },
     ],
 
+    primaryOwners: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    contributors: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
     createdBy: [
       {
         type: mongoose.Schema.Types.ObjectId,

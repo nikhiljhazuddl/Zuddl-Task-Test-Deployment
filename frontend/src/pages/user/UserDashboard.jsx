@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom"
 import RecentTasks from "../../components/RecentTasks"
 import CustomPieChart from "../../components/CustomPieChart"
 import CustomBarChart from "../../components/CustomBarChart"
+import TeamWorkloadChart from "../../components/TeamWorkloadChart"
+import UpcomingDeadlines from "../../components/UpcomingDeadlines"
 
 const COLORS = ["#FF6384", "#36A2EB", "#FFCE56"]
 
@@ -18,6 +20,8 @@ const UserDashboard = () => {
   const [dashboardData, setDashboardData] = useState([])
   const [pieChartData, setPieChartData] = useState([])
   const [barChartData, setBarChartData] = useState([])
+  const [teamWorkload, setTeamWorkload] = useState([])
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([])
 
   // prepare data for pie chart
   const prepareChartData = (data) => {
@@ -54,8 +58,48 @@ const UserDashboard = () => {
     }
   }
 
+  const getTeamWorkload = async () => {
+    try {
+      const response = await axiosInstance.get("/users/get-users")
+      
+      if (response.data) {
+        // Transform user data to workload format
+        const workloadData = response.data.map(user => ({
+          userId: user._id,
+          name: user.name,
+          email: user.email,
+          profileImageUrl: user.profileImageUrl,
+          pending: user.pendingTasks || 0,
+          inProgress: user.inProgressTasks || 0,
+          completed: user.completedTasks || 0,
+          total: (user.pendingTasks || 0) + (user.inProgressTasks || 0) + (user.completedTasks || 0)
+        }))
+        
+        // Sort by total tasks descending
+        workloadData.sort((a, b) => b.total - a.total)
+        
+        setTeamWorkload(workloadData)
+      }
+    } catch (error) {
+      console.error("Error fetching team workload:", error)
+    }
+  }
+
+  const getUpcomingDeadlines = async () => {
+    try {
+      const response = await axiosInstance.get("/tasks/upcoming-deadlines")
+      if (response.data) {
+        setUpcomingDeadlines(response.data)
+      }
+    } catch (error) {
+      console.error("Error fetching upcoming deadlines:", error)
+    }
+  }
+
   useEffect(() => {
     getDashboardData()
+    getTeamWorkload()
+    getUpcomingDeadlines()
 
     return () => {}
   }, [])
@@ -119,6 +163,9 @@ const UserDashboard = () => {
           </div>
         )}
 
+        {/* Upcoming Deadlines Alert */}
+        <UpcomingDeadlines tasks={upcomingDeadlines} />
+
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-xl">
@@ -144,6 +191,30 @@ const UserDashboard = () => {
               <CustomBarChart data={barChartData} />
             </div>
           </div>
+        </div>
+
+        {/* Team Workload Section */}
+        <div className="bg-white p-6 rounded-xl shadow-md">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">
+              Team Workload Overview
+            </h3>
+            <div className="flex gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span className="text-gray-600">Pending</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-gray-600">In Progress</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-gray-600">Completed</span>
+              </div>
+            </div>
+          </div>
+          <TeamWorkloadChart data={teamWorkload} />
         </div>
 
         {/* Recent Task Section */}
