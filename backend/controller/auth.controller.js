@@ -80,12 +80,14 @@ export const signin = async (req, res, next) => {
 
     const { password: pass, ...rest } = validUser._doc
 
+   const isProduction = process.env.NODE_ENV === 'production'
+
     res
       .status(200)
       .cookie("access_token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: isProduction, // true in production (HTTPS), false in development
+        sameSite: isProduction ? "none" : "lax", // 'none' for cross-site in production
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/",
       })
